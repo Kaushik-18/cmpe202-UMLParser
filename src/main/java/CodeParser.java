@@ -1,14 +1,16 @@
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
+import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.*;
-import com.sun.org.apache.xml.internal.dtm.ref.ExtendedType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by kaushik on 25/2/17.
@@ -40,9 +42,7 @@ public class CodeParser {
                     }
                 }
             }
-            for (ClassOrInterfaceDeclaration dec : typeMap.values()) {
-                readClassOrInterfaceDetails(dec);
-            }
+            typeMap.values().forEach(this::readClassOrInterfaceDetails);
             printRelations(relationsList);
             umlBuilder.append("\n@enduml");
             System.out.print("uml " + umlBuilder.toString());
@@ -50,6 +50,7 @@ public class CodeParser {
         return umlBuilder;
     }
 
+    //reads all classes in file..
     private ClassOrInterfaceDeclaration readClassOrInterfaceName(CompilationUnit unit) {
         List<Node> nodelist = unit.getChildNodes();
         for (Node node : nodelist) {
@@ -63,16 +64,12 @@ public class CodeParser {
     private void readClassOrInterfaceDetails(ClassOrInterfaceDeclaration unit) {
         if (!unit.isInterface()) {
             umlBuilder.append("class ").append(unit.getName()).append("{\n");
-            for (ClassOrInterfaceType exType : unit.getExtendedTypes()) {
-                relationsList.add(new RelationType(unit.getNameAsString(),
-                        exType.getNameAsString(),
-                        RelationEnum.EXTENDS, " "));
-            }
-            for (ClassOrInterfaceType impType : unit.getImplementedTypes()) {
-                relationsList.add(new RelationType(unit.getNameAsString(),
-                        impType.getNameAsString(),
-                        RelationEnum.IMPEMENTS, " "));
-            }
+            relationsList.addAll(unit.getExtendedTypes().stream().map(exType -> new RelationType(unit.getNameAsString(),
+                    exType.getNameAsString(),
+                    RelationEnum.EXTENDS, " ")).collect(Collectors.toList()));
+            relationsList.addAll(unit.getImplementedTypes().stream().map(impType -> new RelationType(unit.getNameAsString(),
+                    impType.getNameAsString(),
+                    RelationEnum.IMPEMENTS, " ")).collect(Collectors.toList()));
         } else {
             umlBuilder.append("interface ").append(unit.getName()).append("{\n");
         }
@@ -85,8 +82,11 @@ public class CodeParser {
     private void readAllMethodsInClass(ClassOrInterfaceDeclaration unit, HashMap<String, String> variablesMap) {
         List<MethodDeclaration> methodslist = unit.getMethods();
         if (methodslist != null) {
+
             for (MethodDeclaration method : methodslist) {
                 if (method.getDeclarationAsString().startsWith("public")) {
+                    //obtain usages of interface type inside methods
+                    readMethodBody(method, unit.getNameAsString());
                     //check for getter ,setter
                     if (checkGetterSetter(method)) {
                         String vName = method.getNameAsString().substring(3).toLowerCase();
@@ -114,16 +114,27 @@ public class CodeParser {
 
     private boolean checkGetterSetter(MethodDeclaration method) {
         String methodName = method.getNameAsString();
-        int bodySize = 0;
-        if (method.getBody().isPresent()) {
-            bodySize = method.getBody().get().getStatements().size();
-        }
+        int bodySize = method.getBody().orElse(new BlockStmt()).getStatements().size();
         if (methodName.startsWith("get") && method.getParameters().size() == 0 && bodySize == 1) {
             return true;
         } else if (methodName.startsWith("set") && method.getParameters().size() == 1 && bodySize == 1) {
             return true;
         }
         return false;
+    }
+
+    private void readMethodBody(MethodDeclaration method, String className) {
+        NodeList<Statement> statements = method.getBody().orElse(new BlockStmt()).getStatements();
+        for (Statement statement : statements) {
+            String words[] = statement.toString().trim().split(" ");
+            for (String word : words) {
+                if (typeMap.containsKey(word) && typeMap.get(word).isInterface()) {
+                    relationsList.add(new RelationType(className,
+                            word, RelationEnum.INTERFACE_USES, " : uses"));
+                }
+            }
+
+        }
     }
 
     //read all attributes declared in class;build a HashMap for later comparison ie finding getters and setters
@@ -135,10 +146,14 @@ public class CodeParser {
                 if (dec.toString().startsWith("public") || dec.toString().startsWith("private")) {
                     for (VariableDeclarator expr : dec.getVariables()) {
                         Type type = expr.getType();
-                        obtainType(type,unit);
-                        String sign = dec.toString().startsWith("public") ? " + " : " - ";
-                        String variableExpression = sign + expr.getName() + ":" + type;
-                        variablesMap.put(expr.getName().toString(), variableExpression);
+                        RelationType relation = obtainRelationFromType(type, unit);
+                        if (relation == null) {
+                            String sign = dec.toString().startsWith("public") ? " + " : " - ";
+                            String variableExpression = sign + expr.getName() + ":" + type;
+                            variablesMap.put(expr.getName().toString(), variableExpression);
+                        } else {
+                            relationsList.add(relation);
+                        }
                     }
                 }
             }
@@ -158,14 +173,29 @@ public class CodeParser {
         }
     }
 
-    private void obtainType(Type type, ClassOrInterfaceDeclaration dec) {
+    private RelationType obtainRelationFromType(Type type, ClassOrInterfaceDeclaration dec) {
+        //Checking if
         if (!(type instanceof PrimitiveType) && !type.toString().equals("String")) {
-            if (typeMap.containsKey(type.toString())) {
-                relationsList.add(new RelationType(dec.getName().toString(),
-                        type.toString(), RelationEnum.ASSOCIATE, "uses"));
+            if (type instanceof ArrayType) {
+                Type narrayType = ((ArrayType) type).getComponentType();
+                if (!(narrayType instanceof PrimitiveType) &&
+                        !narrayType.toString().equalsIgnoreCase("String")) {
+                    return new RelationType(dec.getName().toString(),
+                            type.toString(), RelationEnum.ASSOCIATE, " : *");
+                }
+            } else {
+
+                if (typeMap.containsKey(type.toString())) {
+                    if (typeMap.get(type.toString()).isInterface()) {
+                        return new RelationType(dec.getName().toString(),
+                                type.toString(), RelationEnum.INTERFACE_USES, " : uses");
+                    }
+                }
             }
         }
-
+        return null;
     }
+
+
 
 }

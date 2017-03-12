@@ -16,7 +16,7 @@ public class RelationType {
 
     @Override
     public String toString() {
-        return endClass + r_enum.symbol + startClass + label;
+        return endClass + r_enum.symbol + startClass +label;
     }
 }
 
