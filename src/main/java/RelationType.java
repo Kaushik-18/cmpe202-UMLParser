@@ -24,7 +24,7 @@ enum RelationEnum {
     EXTENDS("<|--"),
     ASSOCIATE("-"),
     IMPEMENTS("<|.."),
-    INTERFACE_USES("<..");
+    DEPENCENCY("<..");
 
     String symbol;
 

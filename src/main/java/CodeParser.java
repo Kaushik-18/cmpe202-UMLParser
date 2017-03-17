@@ -15,35 +15,58 @@ import java.util.stream.Collectors;
 /**
  * Created by kaushik on 25/2/17.
  */
-public class CodeParser {
+class CodeParser {
 
     private StringBuilder umlBuilder;
-    private HashMap<String, ClassOrInterfaceDeclaration> typeMap;
-    private ArrayList<RelationType> relationsList;
+    private HashMap<String, ClassOrInterfaceDeclaration> _typeMap;
+    private HashMap<String, List<MethodDeclaration>> _interfaceMap;
+    private ArrayList<RelationType> _relationsList;
 
-    public CodeParser() {
+    CodeParser() {
         umlBuilder = new StringBuilder();
-        relationsList = new ArrayList<>();
+        _relationsList = new ArrayList<>();
+        _interfaceMap = new HashMap<>();
+        _typeMap = new HashMap<>();
     }
+
+    public HashMap getInterfaceMap() {
+        return _interfaceMap;
+    }
+
+    public HashMap _getTypeMap() {
+        return _typeMap;
+    }
+
+    public StringBuilder getUmlBuilder() {
+        return umlBuilder;
+    }
+
+    public List<RelationType> getRelationsList() {
+        return _relationsList;
+    }
+
 
     public StringBuilder readCodeTree(String filePath) {
         File sourceFolder = new File(filePath);
         umlBuilder.append("@startuml\n skinparam classAttributeIconSize 0\n");
-        typeMap = new HashMap<>();
+
         if (sourceFolder.exists()) {
             for (File source : sourceFolder.listFiles()) {
                 if (source.getName().endsWith(".java")) {
                     try {
                         CompilationUnit unit = JavaParser.parse(source);
                         ClassOrInterfaceDeclaration dec = readClassOrInterfaceName(unit);
-                        typeMap.put(dec.getName().toString(), dec);
+                        if (dec != null) {
+                            _typeMap.put(dec.getName().toString(), dec);
+                        }
+                        parseClassInterfaceTypes(dec);
+
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
                 }
             }
-            typeMap.values().forEach(this::readClassOrInterfaceDetails);
-            printRelations(relationsList);
+            //printRelations(relationsList);
             umlBuilder.append("\n@enduml");
             System.out.print("uml " + umlBuilder.toString());
         }
@@ -61,28 +84,27 @@ public class CodeParser {
         return null;
     }
 
-    private void readClassOrInterfaceDetails(ClassOrInterfaceDeclaration unit) {
+    private void parseClassInterfaceTypes(ClassOrInterfaceDeclaration unit) {
         if (!unit.isInterface()) {
             umlBuilder.append("class ").append(unit.getName()).append("{\n");
-            relationsList.addAll(unit.getExtendedTypes().stream().map(exType -> new RelationType(unit.getNameAsString(),
+            _relationsList.addAll(unit.getExtendedTypes().stream().map(exType -> new RelationType(unit.getNameAsString(),
                     exType.getNameAsString(),
                     RelationEnum.EXTENDS, " ")).collect(Collectors.toList()));
-            relationsList.addAll(unit.getImplementedTypes().stream().map(impType -> new RelationType(unit.getNameAsString(),
+            _relationsList.addAll(unit.getImplementedTypes().stream().map(impType -> new RelationType(unit.getNameAsString(),
                     impType.getNameAsString(),
                     RelationEnum.IMPEMENTS, " ")).collect(Collectors.toList()));
         } else {
             umlBuilder.append("interface ").append(unit.getName()).append("{\n");
         }
-        HashMap<String, String> varMap = readAllAttributes(unit);
-        readAllMethodsInClass(unit, varMap);
-        printAttributes(varMap);
         umlBuilder.append("}\n");
     }
 
-    private void readAllMethodsInClass(ClassOrInterfaceDeclaration unit, HashMap<String, String> variablesMap) {
+
+
+   /* private void readAllMethodsInClass(ClassOrInterfaceDeclaration unit, HashMap<String, String> variablesMap) {
         List<MethodDeclaration> methodslist = unit.getMethods();
         if (methodslist != null) {
-
+            //methodslist.stream().filter(method -> method.getNameAsString().);
             for (MethodDeclaration method : methodslist) {
                 if (method.getDeclarationAsString().startsWith("public")) {
                     //obtain usages of interface type inside methods
@@ -123,45 +145,7 @@ public class CodeParser {
         return false;
     }
 
-    private void readMethodBody(MethodDeclaration method, String className) {
-        NodeList<Statement> statements = method.getBody().orElse(new BlockStmt()).getStatements();
-        for (Statement statement : statements) {
-            String words[] = statement.toString().trim().split(" ");
-            for (String word : words) {
-                if (typeMap.containsKey(word) && typeMap.get(word).isInterface()) {
-                    relationsList.add(new RelationType(className,
-                            word, RelationEnum.INTERFACE_USES, " : uses"));
-                }
-            }
-
-        }
-    }
-
-    //read all attributes declared in class;build a HashMap for later comparison ie finding getters and setters
-    private HashMap<String, String> readAllAttributes(ClassOrInterfaceDeclaration unit) {
-        HashMap<String, String> variablesMap = new HashMap<>();
-        List<FieldDeclaration> fieldslist = unit.getFields();
-        if (fieldslist != null) {
-            for (FieldDeclaration dec : fieldslist) {
-                if (dec.toString().startsWith("public") || dec.toString().startsWith("private")) {
-                    for (VariableDeclarator expr : dec.getVariables()) {
-                        Type type = expr.getType();
-                        RelationType relation = obtainRelationFromType(type, unit);
-                        if (relation == null) {
-                            String sign = dec.toString().startsWith("public") ? " + " : " - ";
-                            String variableExpression = sign + expr.getName() + ":" + type;
-                            variablesMap.put(expr.getName().toString(), variableExpression);
-                        } else {
-                            relationsList.add(relation);
-                        }
-                    }
-                }
-            }
-        }
-        return variablesMap;
-    }
-
-    private void printAttributes(HashMap<String, String> attributesMap) {
+    private void buildAttributes(HashMap<String, String> attributesMap) {
         for (String value : attributesMap.values()) {
             umlBuilder.append(value).append("\n");
         }
@@ -196,6 +180,18 @@ public class CodeParser {
         return null;
     }
 
+    private void readMethodBody(MethodDeclaration method, String className) {
+        NodeList<Statement> statements = method.getBody().orElse(new BlockStmt()).getStatements();
+        for (Statement statement : statements) {
+            String words[] = statement.toString().trim().split(" ");
+            for (String word : words) {
+                if (typeMap.containsKey(word) && typeMap.get(word).isInterface()) {
+                    relationsList.add(new RelationType(className,
+                            word, RelationEnum.INTERFACE_USES, " : uses"));
+                }
+            }
 
+        }
+    }*/
 
 }
