@@ -14,7 +14,7 @@ public class UMLGenerator {
             //TODO read output and input path from command line
             //Generating the required string
             CodeParser parser = new CodeParser();
-            StringBuilder umlBuilder = parser.readCodeTree("/home/kaushik/Downloads/Git Projects/testjava");
+            StringBuilder umlBuilder = parser.readCodeTree("/home/kaushik/Downloads/202/cmpe202/umlparser/uml-parser-test-1");
             //passing generated string to PlantUMl
             SourceStringReader plantUmlReader = new SourceStringReader(umlBuilder.toString());
             try (FileOutputStream imageOutputStream = new FileOutputStream("/home/kaushik/Downloads/Git Projects/uml.png")) {
