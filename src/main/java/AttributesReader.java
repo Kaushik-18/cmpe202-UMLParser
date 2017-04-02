@@ -11,11 +11,11 @@ import java.util.List;
 /**
  * Created by kaushik on 12/3/17.
  */
-public class AttributesParser {
+public class AttributesReader {
 
     private CodeParser _mainParser;
 
-    AttributesParser(CodeParser mainParser) {
+    AttributesReader(CodeParser mainParser) {
         _mainParser = mainParser;
     }
 
@@ -28,7 +28,7 @@ public class AttributesParser {
                     .forEach(dec -> {
                         for (VariableDeclarator expr : dec.getVariables()) {
                             Type type = expr.getType();
-                             if(_mainParser.getRelationsBuilder().obtainRelationFromType(type, unit))
+                             if(!_mainParser.getRelationsBuilder().obtainRelationFromType(type, unit))
                             {
                                 String sign = dec.toString().startsWith("public") ? " + " : " - ";
                                 String variableExpression = sign + expr.getName() + ":" + type;
