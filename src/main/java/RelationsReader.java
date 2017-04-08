@@ -22,6 +22,9 @@ public class RelationsReader {
     }
 
     public boolean obtainRelationFromType(Type type, ClassOrInterfaceDeclaration dec) {
+        if(dec.isInterface()){
+            return false ;
+        }
         String typeStr = type.toString();
         if (!(type instanceof PrimitiveType) && !typeStr.equals("String")) {
             if (type instanceof ArrayType) {
@@ -47,14 +50,37 @@ public class RelationsReader {
 
     //checking for already added relation between classes
     void updateRelationsList(RelationType relation) {
-        if (relation.getRelation() == RelationEnum.ASSOCIATE || relation.getRelation() == RelationEnum.ASSOCIATE_MANY)
-            _asscMap.put(relation.endClass + "|" + relation.startClass, relation);
+        if (relation.getRelation() == RelationEnum.ASSOCIATE ||
+                relation.getRelation() == RelationEnum.ASSOCIATE_MANY) {
 
-        int pos = _relationsList.indexOf(relation);
-        if (pos < 0) {
-            _relationsList.add(relation);
+            String key1 = relation.startClass + relation.endClass;
+            String key2 = relation.endClass + relation.startClass;
+
+            if (!_asscMap.containsKey(key1) && !_asscMap.containsKey(key2)) {
+                _asscMap.put(key1, relation);
+            } else {
+                RelationType storedRelation = _asscMap.get(_asscMap.containsKey(key1) ? key1 : key2);
+                RelationType updatedRelation = null;
+                if (storedRelation.getRelation() == RelationEnum.ASSOCIATE && relation.getRelation() == RelationEnum.ASSOCIATE) {
+                    ///////
+                    updatedRelation = new RelationType(relation.startClass, relation.endClass, RelationEnum.ASSOCIATE_ONE_TO_ONE, "");
+                } else if (storedRelation.getRelation() == RelationEnum.ASSOCIATE && relation.getRelation() == RelationEnum.ASSOCIATE_MANY) {
+                    /////////
+                    updatedRelation = new RelationType(relation.startClass, relation.endClass, RelationEnum.ASSOCIATE_ONE_TO_MANY, "");
+
+                } else if (storedRelation.getRelation() == RelationEnum.ASSOCIATE_MANY && relation.getRelation() == RelationEnum.ASSOCIATE) {
+                    ///////
+                    updatedRelation = new RelationType(storedRelation.startClass, storedRelation.endClass, RelationEnum.ASSOCIATE_ONE_TO_MANY, "");
+                }
+                _asscMap.put(_asscMap.containsKey(key1) ? key1 : key2 , updatedRelation);
+            }
+
+        } else {
+            int pos = _relationsList.indexOf(relation);
+            if (pos < 0) {
+                _relationsList.add(relation);
+            }
         }
-
     }
 
     void addRelations(List<RelationType> reList) {
@@ -65,6 +91,11 @@ public class RelationsReader {
         for (RelationType type : _relationsList) {
             _mParser.getUmlBuilder().append(type.toString()).append("\n");
         }
+        Collection<RelationType> relValues = _asscMap.values();
+        for (RelationType assType : relValues) {
+            _mParser.getUmlBuilder().append(assType.toString()).append("\n");
+        }
+
     }
 
 }

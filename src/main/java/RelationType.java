@@ -25,9 +25,9 @@ public class RelationType {
             RelationType t = (RelationType) o;
             if (t.endClass.equalsIgnoreCase(this.endClass) &&
                     t.startClass.equalsIgnoreCase(this.startClass) &&
-                    t.getRelation() == this.getRelation())
+                    t.getRelation() == this.getRelation()) {
                 return true;
-            else
+            } else
                 return false;
         } else
             return false;
@@ -40,9 +40,13 @@ public class RelationType {
 
 enum RelationEnum {
     EXTENDS(" <|-- "),
-    ASSOCIATE(" - "),
     IMPEMENTS(" <|.. "),
+
+    ASSOCIATE(" - "),
     ASSOCIATE_MANY(" \"0...*\" - "),
+    ASSOCIATE_ONE_TO_ONE("\"1...1\" - "),
+    ASSOCIATE_ONE_TO_MANY("\"1...*\"  - "),
+
     DEPENCENCY(" <.. ");
 
     String symbol;
@@ -54,4 +58,5 @@ enum RelationEnum {
     String getSymbol() {
         return symbol;
     }
+
 }
