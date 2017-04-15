@@ -43,7 +43,7 @@ enum RelationEnum {
     IMPEMENTS(" <|.. "),
 
     ASSOCIATE(" - "),
-    ASSOCIATE_MANY(" \"0...*\" - "),
+    ASSOCIATE_MANY(" \"*\" - "),
     ASSOCIATE_ONE_TO_ONE("\"1...1\" - "),
     ASSOCIATE_ONE_TO_MANY("\"1...*\"  - "),
 

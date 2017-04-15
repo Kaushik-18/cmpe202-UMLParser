@@ -27,7 +27,7 @@ public class MethodsReader {
                 if (_mParser._getTypeMap().containsKey(word) &&
                         (_mParser._getTypeMap().get(word).isInterface())) {
                     _mParser.getRelationsBuilder().updateRelationsList(new RelationType(className,
-                            word, RelationEnum.DEPENCENCY, "  : using "));
+                            word, RelationEnum.DEPENCENCY, "  "));
                 }
             }
         }
@@ -56,9 +56,10 @@ public class MethodsReader {
                             paramsbuilder.append(params.getName()).append(" : ").append(params.getType()).append(" ");
                             String paramType = params.getType().toString();
                             if (_mParser._getTypeMap().containsKey(paramType) &&
-                                    (_mParser._getTypeMap().get(paramType).isInterface())) {
+                                    (_mParser._getTypeMap().get(paramType).isInterface()) &&
+                                    !unit.isInterface()) {
                                 _mParser.getRelationsBuilder().updateRelationsList(new RelationType(unit.getNameAsString(),
-                                        params.getType().toString(),RelationEnum.DEPENCENCY," : using "));
+                                        params.getType().toString(), RelationEnum.DEPENCENCY, "  "));
                             }
                         }
                         _mParser.getUmlBuilder().append("+").append(method.getName())

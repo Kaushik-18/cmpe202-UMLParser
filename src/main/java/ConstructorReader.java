@@ -31,7 +31,7 @@ public class ConstructorReader {
                     if (_mainParser._getTypeMap().containsKey(paramType) &&
                             (_mainParser._getTypeMap().get(paramType).isInterface())) {
                         _mainParser.getRelationsBuilder().updateRelationsList(new RelationType(unit.getNameAsString(),
-                                params.getType().toString(), RelationEnum.DEPENCENCY, " : using "));
+                                params.getType().toString(), RelationEnum.DEPENCENCY, "  "));
                     }
                 }
                 _mainParser.getUmlBuilder().append("+").append(l.getName())
