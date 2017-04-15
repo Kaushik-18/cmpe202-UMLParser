@@ -71,7 +71,7 @@ class CodeParser {
             }
             _relBuilder.printRelations();
             _umlBuilder.append("\n@enduml");
-            System.out.print("uml " + _umlBuilder.toString());
+
         }
         return _umlBuilder;
     }

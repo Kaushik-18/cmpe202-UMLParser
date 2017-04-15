@@ -11,18 +11,30 @@ import java.io.OutputStream;
 public class UMLGenerator {
     public static void main(String args[]) {
         if (args != null) {
-            //TODO read output and input path from command line
-            //Generating the required string
-            CodeParser parser = new CodeParser();
-            StringBuilder umlBuilder = parser.readCodeTree("/home/kaushik/Downloads/202/cmpe202/umlparser/uml-parser-test-5");
-            //passing generated string to PlantUMl
-            SourceStringReader plantUmlReader = new SourceStringReader(umlBuilder.toString());
-            try (FileOutputStream imageOutputStream = new FileOutputStream("/home/kaushik/Downloads/Git Projects/uml.png")) {
-                plantUmlReader.generateImage(imageOutputStream);
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (args.length < 2) {
+                System.out.println(" Please enter input and output files path");
+                return;
             }
+            if (args.length == 4) {
 
+
+            } else if (args.length == 2) {
+                //Generating the required string
+                CodeParser parser = new CodeParser();
+                StringBuilder umlBuilder = parser.readCodeTree(args[0]);
+                //passing generated string to PlantUMl
+                createImage(args[1], umlBuilder.toString());
+            }
         }
     }
+
+    private static void createImage(String outputPath, String input) {
+        SourceStringReader plantUmlReader = new SourceStringReader(input);
+        try (FileOutputStream imageOutputStream = new FileOutputStream(outputPath)) {
+            plantUmlReader.generateImage(imageOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
