@@ -18,7 +18,9 @@ saved. We can use the jar file directly or use the shell script in uml_parser_pa
 ## Sequence Diagram :-
 For sequence diagram ,I need the following additional tools :-
 AspectJ Compiler (ajc) from eclipse.org
+
 AspectJ runtime aspectjrt.jar from eclipse.org
+
 I use AspectJ to define pointcuts (in my SequenceAspect.aj file) which allows me to trace the method calls
 made at runtime. I then use this trace to generate input for the plantUML library which creates the actual
 image.
@@ -26,9 +28,11 @@ image.
 ## To run the sequence diagram portion :-
 Go to uml_parser_pack folder contains a bash script for running sequence diagram generation code.
 Script requires 3 inputs :- “seq” “input folder path” “output path”
+
 On running the script a temp folder is created in which the source code and SequenceAspect.aj file is copied .
 the ajc compiler is used to compile the source coe in the temp folder and weave in the aspectJ portions into
 the code.
+
 Run the code as a normal Java program ; the traceis written to a sequence.txt file which is given as input to
 umlparser jar file for generating the sequence diagram.
 Note :- For now ,the script assumes that the ‘main()’ method is defined in a class called Main
