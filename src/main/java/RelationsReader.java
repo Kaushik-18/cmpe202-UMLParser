@@ -22,8 +22,8 @@ public class RelationsReader {
     }
 
     public boolean obtainRelationFromType(Type type, ClassOrInterfaceDeclaration dec) {
-        if(dec.isInterface()){
-            return false ;
+        if (dec.isInterface()) {
+            return false;
         }
         String typeStr = type.toString();
         if (!(type instanceof PrimitiveType) && !typeStr.equals("String")) {
@@ -32,7 +32,7 @@ public class RelationsReader {
                 if (!(narrayType instanceof PrimitiveType) &&
                         !narrayType.toString().equalsIgnoreCase("String")) {
                     updateRelationsList(new RelationType(dec.getName().toString(),
-                            type.toString(), RelationEnum.ASSOCIATE_MANY, " "));
+                            narrayType.toString(), RelationEnum.ASSOCIATE_MANY, " "));
                 }
             } else if (typeStr.contains("Collection") || typeStr.contains("ArrayList")) {
                 String collectionType = typeStr.substring(typeStr.indexOf("<") + 1, typeStr.indexOf(">"));
@@ -72,7 +72,8 @@ public class RelationsReader {
                     ///////
                     updatedRelation = new RelationType(storedRelation.startClass, storedRelation.endClass, RelationEnum.ASSOCIATE_ONE_TO_MANY, "");
                 }
-                _asscMap.put(_asscMap.containsKey(key1) ? key1 : key2 , updatedRelation);
+                if (updatedRelation != null)
+                    _asscMap.put(_asscMap.containsKey(key1) ? key1 : key2, updatedRelation);
             }
 
         } else {
